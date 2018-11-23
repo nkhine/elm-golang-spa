@@ -1,0 +1,108 @@
+swagger: '2.0'
+info:
+  title: API
+  description: |-
+    ### Service Overview
+    The data service provides a Representational State Transfer (REST) Application Programming Interface (API) that enables you to add Mims data capabilities within your application.
+    ### API Overview
+    The Data Service provides the following endpoints:
+    * `/status` - get the status of our services.
+    ### API Usage
+    The following information provides details about using the service to search the Mims database:
+    * **HTTP REST interfaces:** You can use methods of the session-based, sessionless, or asynchronous HTTP interfaces to pass search data to the service. All interfaces let you send the data via the body of the request; the session-based and sessionless.
+    * **Authentication:** You authenticate to the service by using your service credentials. You can use your credentials to obtain a token and contact the service directly. See <a target='_blank' href='#'>Obtaining credentials for Mims services</a> and <a target='_blank' href='#'>Using tokens with Mims services</a>.
+  version: 1.0.0
+host: api.zmgc.net
+schemes:
+  - https
+  - http
+basePath: /
+produces:
+  - application/json
+tags:
+  - name: admin
+  - name: account
+paths:
+  /status:
+    get:
+      tags:
+        - admin
+      summary: Retrieve API Status
+      responses:
+        '200':
+          description: The request succeeded.
+        '400':
+          description: Bad request error.
+          schema:
+            $ref: '#/definitions/ErrorSessionless'
+        '401':
+          description: The specified credentials are invalid.
+          schema:
+            $ref: '#/definitions/ErrorSessionless'
+        '403':
+          description: Error in fetching query response.
+          schema:
+            $ref: '#/definitions/ErrorSessionless'
+        '404':
+          description: Not Acceptable
+          schema:
+            $ref: '#/definitions/ErrorSessionless'
+        '415':
+          description: Unsupported Type
+          schema:
+            $ref: '#/definitions/ErrorSessionless'
+        '500':
+          description: Protocol `http` not supported. Expected `https`
+          schema:
+            $ref: '#/definitions/ErrorSessionless'
+
+definitions:
+  ErrorSession:
+    required:
+      - error
+      - code
+      - code_description
+      - session_closed
+    properties:
+      error:
+        description: Description of the problem.
+        type: string
+      code:
+        description: HTTP response code.
+        type: integer
+        format: int32
+      code_description:
+        description: Response message.
+        type: string
+      session_closed:
+        description: Specifies the value `true` if the active session is closed as a result of the problem.
+        type: boolean
+  ErrorSessionless:
+    required:
+      - error
+      - code
+      - code_description
+    properties:
+      error:
+        description: Description of the problem.
+        type: string
+      code:
+        description: HTTP response code.
+        type: integer
+        format: int32
+      code_description:
+        description: Response message.
+        type: string
+
+securityDefinitions:
+  APIKeyH:
+    type: apiKey
+    name: X-API-Key
+    in: header
+  APIKeyQ:
+    type: apiKey
+    name: token
+    in: query
+security:
+  - APIKeyH: []
+  - APIKeyQ: []

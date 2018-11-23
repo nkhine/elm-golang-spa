@@ -61,7 +61,7 @@ functions:
 
 resources:
   Resources:
-    romulusBucket:
+    elmBucket:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: ${file(./config.yml):${opt:stage}.ELM_BUCKET}
@@ -84,7 +84,7 @@ resources:
       Type: AWS::S3::BucketPolicy
       Properties:
         Bucket:
-          Ref: romulusBucket
+          Ref: elmBucket
         PolicyDocument:
           Statement:
             - Sid: PublicReadGetObject

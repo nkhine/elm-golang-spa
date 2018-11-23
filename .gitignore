@@ -5,8 +5,10 @@ jspm_packages
 # Serverless directories
 package-lock.json
 vendor.json
-*/vendor/*
-build/*
+build
 config.yml
 bin
 Gopkg.lock
+spec.json
+elm-stuff
+vendor

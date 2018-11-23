@@ -1,0 +1,12 @@
+.serverless
+# package directories
+node_modules
+jspm_packages
+# Serverless directories
+package-lock.json
+vendor.json
+*/vendor/*
+build/*
+config.yml
+bin
+Gopkg.lock

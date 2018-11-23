@@ -1,0 +1,136 @@
+service: zmgc
+
+plugins:
+  - serverless-s3-sync
+  - serverless-domain-manager
+
+package:
+ exclude:
+   - ./**
+ include:
+   - ./bin/status
+
+provider:
+  name: aws
+  runtime: go1.x
+  stage: ${opt:stage}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:*
+      Resource: "*"
+    - Effect: Allow
+      Action:
+        - apigateway:*
+      Resource: "arn:aws:apigateway:*::/*"
+    - Effect: Allow
+      Action:
+        - execute-api:Invoke
+      Resource: "arn:aws:execute-api:*:*:*"
+    - Effect: Allow
+      Action:
+        - logs:CreateLogGroup
+        - logs:CreateLogStream
+        - logs:DescribeLogGroups
+        - logs:DescribeLogStreams
+        - logs:PutLogEvents
+        - logs:GetLogEvents
+        - logs:FilterLogEvents
+      Resource: "*"
+
+custom:
+  s3Sync:
+    - bucketName: ${file(./config.yml):${opt:stage}.ELM_BUCKET}
+      localDir: build
+  customDomain:
+    domainName: ${file(./config.yml):${opt:stage}.DOMAIN_ROOT}
+    basePath: ''
+    stage: ${self:provider.stage}
+    createRoute53Record: true
+
+functions:
+  status:
+    handler: bin/status
+    description: Status/healthcheck function for PRICES API
+    memorySize: 128
+    events:
+      - http:
+          path: status
+          method: get
+    timeout: 30
+
+resources:
+  Resources:
+    romulusBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${file(./config.yml):${opt:stage}.ELM_BUCKET}
+        AccessControl: PublicRead
+        WebsiteConfiguration:
+          ErrorDocument: index.html
+          IndexDocument: index.html
+        CorsConfiguration:
+          CorsRules:
+          - AllowedMethods:
+            - GET
+            - POST
+            - PUT
+            - HEAD
+            AllowedOrigins:
+            - "*"
+            AllowedHeaders:
+            - "*"
+    elmBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket:
+          Ref: romulusBucket
+        PolicyDocument:
+          Statement:
+            - Sid: PublicReadGetObject
+              Effect: Allow
+              Principal: "*"
+              Action:
+              - s3:GetObject
+              Resource:
+                Fn::Join: [
+                  "", [
+                    "arn:aws:s3:::",
+                    {
+                      "Ref": "elmBucket"
+                    },
+                    "/*"
+                  ]
+                ]
+    CDN:
+      Type: "AWS::CloudFront::Distribution"
+      Properties:
+        DistributionConfig:
+          ViewerCertificate:
+            AcmCertificateArn: ${file(./config.yml):${opt:stage}.CERTIFICATE_ARN}
+            SslSupportMethod: sni-only
+          Enabled: true
+          HttpVersion: http2
+          # IsIPV6Enabled: true
+          # not supported by cloudformation
+          # https://forums.aws.amazon.com/thread.jspa?messageID=764293
+          Aliases: ${file(./config.yml):${opt:stage}.DOMAIN_ALIASES}
+          DefaultRootObject: index.html
+          Origins:
+            - DomainName: {"Fn::Join": ["", ["${file(./config.yml):${opt:stage}.ELM_BUCKET}", ".", "s3.amazonaws.com"]]}
+              # us-east-1.s3.amazonaws.com
+              Id: {"Fn::Join": ["", ["S3", "-", "${file(./config.yml):${opt:stage}.ELM_BUCKET}"]]}
+              CustomOriginConfig:
+                HTTPSPort: 443
+                OriginProtocolPolicy: http-only
+          DefaultCacheBehavior:
+            ViewerProtocolPolicy: redirect-to-https # allow-all
+            TargetOriginId: {"Fn::Join": ["", ["S3", "-", "${file(./config.yml):${opt:stage}.ELM_BUCKET}"]]}
+            AllowedMethods:
+              - GET
+              - HEAD
+            Compress: true
+            DefaultTTL: 30
+            MinTTL: 10
+            ForwardedValues:
+              QueryString: true

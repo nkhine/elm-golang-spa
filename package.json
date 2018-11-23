@@ -1,0 +1,13 @@
+{
+  "name": "romulus",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "scripts": {},
+  "author": "Norman Khine <norman.khine@metropolis.co.uk> (https://www.metropolis.co.uk/)",
+  "dependencies": {},
+  "devDependencies": {
+    "serverless-domain-manager": "^2.6.5",
+    "serverless-s3-sync": "^1.7.0"
+  }
+}

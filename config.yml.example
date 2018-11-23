@@ -1,0 +1,6 @@
+prod:
+  ELM_BUCKET: s3-bucket-name
+  DOMAIN_ROOT: api.domain.tld
+  DOMAIN_ALIASES: ['cloud-front.domain.tld']
+  CERTIFICATE_ARN:  add-ssl-arn
+

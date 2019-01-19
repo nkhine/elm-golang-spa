@@ -15,6 +15,8 @@ strip:
 clean:
 	rm -rf ./bin/status build
 
+local: clean build strip
+	docker-compose up
 
 domain:
 	sls create_domain --stage ${stage} --region eu-west-2

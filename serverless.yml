@@ -5,10 +5,9 @@ plugins:
   - serverless-domain-manager
 
 package:
- exclude:
-   - ./**
- include:
-   - ./bin/status
+  individually: true
+  exclude:
+    - ./**
 
 provider:
   name: aws
@@ -51,13 +50,17 @@ custom:
 functions:
   status:
     handler: bin/status
-    description: Status/healthcheck function for PRICES API
+    description: Status/healthcheck function for API
+    package:
+      individually: true
+      include:
+        - ./bin/status
     memorySize: 128
+    timeout: 30
     events:
       - http:
           path: status
           method: get
-    timeout: 30
 
 resources:
   Resources:

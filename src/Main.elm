@@ -1,20 +1,26 @@
-module Main exposing (..)
+module Main exposing (Model, Msg(..), init, main, update, view)
 
 import Browser
-import Html exposing (Html, text, div, h1, img)
-import Html.Attributes exposing (src)
+import Element exposing (..)
+import Element.Background as Background
+import Element.Border as Border
+import Element.Events exposing (..)
+import Element.Font as Font
+import Element.Input as Input
+import Html exposing (Html, div, h1, h2, img, p, text)
+import Html.Attributes exposing (..)
 
 
 ---- MODEL ----
 
 
 type alias Model =
-    {}
+    Int
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( {}, Cmd.none )
+    ( 0, Cmd.none )
 
 
 
@@ -23,11 +29,17 @@ init =
 
 type Msg
     = NoOp
+    | Increment
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    ( model, Cmd.none )
+    case ( msg, model ) of
+        ( Increment, _ ) ->
+            ( model, Cmd.none )
+
+        ( NoOp, _ ) ->
+            ( model, Cmd.none )
 
 
 
@@ -36,12 +48,24 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ img [ src "/logo.png" ] []
-        , h1 [] [ text "EMAP CDN!" ]
+    div [ id "main" ]
+        [ viewLogo
+        , viewBanner
         ]
 
 
+viewLogo =
+    div [ class "logo" ]
+        [ img [ src "/logo.png" ] [] ]
+
+
+viewBanner =
+    div [ class "banner" ]
+        [ div [ class "container" ]
+            [ h1 [ class "logo-font" ] [ text "Zeitgeist Movement Global Connect!" ]
+            , p [] [ text "A place to share your knowledge." ]
+            ]
+        ]
 
 ---- PROGRAM ----
 
@@ -51,6 +75,6 @@ main =
     Browser.element
         { view = view
         , init = \_ -> init
-        , update = update
+        , update = \msg model -> ( model, Cmd.none )
         , subscriptions = always Sub.none
         }

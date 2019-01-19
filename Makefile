@@ -13,11 +13,11 @@ strip:
 	strip ./bin/status
 
 clean:
-	rm -rf ./bin/status
+	rm -rf ./bin/status build
 
 
 domain:
 	sls create_domain --stage ${stage} --region eu-west-2
 
-deploy: build strip
+deploy: clean build strip
 	sls deploy --stage ${stage} --region eu-west-2 --aws-profile ${profile} --verbose

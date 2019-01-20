@@ -33,7 +33,7 @@ func Handler(ctx context.Context) (Response, error) {
 		Body:            buf.String(),
 		Headers: map[string]string{
 			"Content-Type":                "application/json",
-			"Access-Control-Allow-Origin": "https://api.zmgc.net",
+			"Access-Control-Allow-Origin": "https://www.zmgc.net",
 		},
 	}
 

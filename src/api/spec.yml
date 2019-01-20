@@ -15,7 +15,6 @@ info:
 host: api.zmgc.net
 schemes:
   - https
-  - http
 basePath: /
 produces:
   - application/json

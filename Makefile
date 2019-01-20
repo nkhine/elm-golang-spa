@@ -1,6 +1,7 @@
 build:
 	${GOPATH}/bin/dep ensure
 	env GOOS=linux go build -o ./bin/status ./lib/status/main.go
+	yaml2json < src/api/spec.yml > public/docs/spec.json
 	elm-app build
 
 init:
@@ -13,7 +14,7 @@ strip:
 	strip ./bin/status
 
 clean:
-	rm -rf ./bin/status build
+	rm -rf ./bin/status build ./public/api/spec.json
 
 local: clean build strip
 	docker-compose up

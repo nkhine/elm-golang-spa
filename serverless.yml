@@ -1,4 +1,5 @@
-service: zmgc
+service:
+  name: zmgc
 
 plugins:
   - serverless-s3-sync
@@ -149,14 +150,14 @@ resources:
     UserPool:
       Type: "AWS::Cognito::UserPool"
       Properties:
-        UserPoolName: $<self:service>-user-pool
+        UserPoolName: ZmgcNameIdentityPool${opt:stage}
         SmsVerificationMessage: "Your verification code is {####}."
         AutoVerifiedAttributes:
           - email
         MfaConfiguration: "OFF"
-        EmailVerificationSubject: "Your Digispeaker verification code"
-        EmailVerificationMessage: "Your Digispeaker verification code is {####}."
-        SmsAuthenticationMessage: "Your Digispeaker authentication code is {####}."
+        EmailVerificationSubject: "Your ZMGC verification code"
+        EmailVerificationMessage: "Your ZMGC verification code is {####}."
+        SmsAuthenticationMessage: "Your ZMGC authentication code is {####}."
         Schema:
           - Name: name
             AttributeDataType: String
@@ -179,9 +180,9 @@ resources:
             RequireUppercase: true
         AdminCreateUserConfig:
           InviteMessageTemplate:
-            EmailMessage: "Your Digispeaker username is {username} and temporary password is {####}."
-            EmailSubject: "Your temporary Digispeaker password"
-            SMSMessage: "Your Digispeaker username is {username} and temporary password is {####}."
+            EmailMessage: "Your ZMGC username is {username} and temporary password is {####}."
+            EmailSubject: "Your temporary ZMGC password"
+            SMSMessage: "Your ZMGC username is {username} and temporary password is {####}."
           UnusedAccountValidityDays: 7
           AllowAdminCreateUserOnly: false
 
@@ -189,7 +190,7 @@ resources:
     UserPoolClient:
       Type: "AWS::Cognito::UserPoolClient"
       Properties:
-        ClientName: $<self:service>-client
+        ClientName: ZmgcUserPoolClient${opt:stage}
         GenerateSecret: false
         UserPoolId:
           Ref: UserPool
@@ -198,7 +199,7 @@ resources:
     IdentityPool:
       Type: "AWS::Cognito::IdentityPool"
       Properties:
-        IdentityPoolName: $<self:service>Identity
+        IdentityPoolName: ZmgcIdentity${opt:stage}
         AllowUnauthenticatedIdentities: true
         CognitoIdentityProviders:
           - ClientId:

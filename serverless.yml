@@ -2,7 +2,7 @@ service:
   name: zmgc
 
 plugins:
-  # - serverless-domain-manager
+  - serverless-domain-manager
   - serverless-appsync-plugin
   - serverless-pseudo-parameters
   - serverless-s3-sync

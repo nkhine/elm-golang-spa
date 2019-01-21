@@ -10,6 +10,7 @@
   },
   "devDependencies": {
     "serverless-domain-manager": "^2.6.5",
+    "serverless-pseudo-parameters": "^2.4.0",
     "serverless-s3-sync": "^1.7.0"
   }
 }

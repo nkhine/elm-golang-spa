@@ -2,8 +2,10 @@ service:
   name: zmgc
 
 plugins:
+  # - serverless-domain-manager
+  - serverless-appsync-plugin
+  - serverless-pseudo-parameters
   - serverless-s3-sync
-  - serverless-domain-manager
 
 package:
   individually: true
@@ -39,6 +41,7 @@ provider:
       Resource: "*"
 
 custom:
+  accountId: #{AWS::AccountId}
   s3Sync:
     - bucketName: ${file(./config.yml):${opt:stage}.ELM_BUCKET}
       localDir: build
@@ -47,10 +50,42 @@ custom:
     basePath: ''
     stage: ${self:provider.stage}
     createRoute53Record: true
+  appSync:
+    name: ${file(./config.yml):${opt:stage}.APP_SYNC}
+    authenticationType: AMAZON_COGNITO_USER_POOLS
+    userPoolConfig:
+      awsRegion: #{AWS::Region}
+      defaultAction: ALLOW
+      userPoolId:  { Ref: UserPool }
+    mappingTemplates:
+      - dataSource: awsLambdaDataSource
+        type: Query #Query, Mutation, Subscription
+        field: helloWorld
+        request: "helloWorld-request-mapping-template.txt"
+        response: "helloWorld-response-mapping-template.txt"
+    schema: # defaults schema.graphql
+    serviceRole: "AppSyncServiceRole"
+    dataSources:
+      - type: AWS_LAMBDA
+        name: awsLambdaDataSource
+        description: 'Lambda DataSource'
+        config:
+          lambdaFunctionArn: { Fn::GetAtt: [GraphqlLambdaFunction, Arn] } # Where GraphqlLambdaFunction is the lambda function cloudformation resource created by serverless for the serverless function named graphql
+          serviceRoleArn: { Fn::GetAtt: [AppSyncLambdaServiceRole, Arn] }
 
 functions:
+  graphql:
+    name: graphql-${self:provider.stage}
+    description: Graphql function
+    handler: bin/graphql
+    package:
+      individually: true
+      include:
+        - ./bin/graphql
+    memorySize: 128
   status:
     handler: bin/status
+    name: status-${self:provider.stage}
     description: Status/healthcheck function for API
     package:
       individually: true
@@ -62,9 +97,38 @@ functions:
       - http:
           path: status
           method: get
+  process:
+    handler: bin/process
+    description: Process CSV files function
+    package:
+      individually: true
+      include:
+        - ./bin/resize
+    memorySize: 128
+    timeout: 30
+    events:
+      - s3: csv
 
 resources:
   Resources:
+    S3BucketCsv:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${file(./config.yml):${opt:stage}.CSV_BUCKET}
+        # add additional custom bucket configuration here
+    ProcessLambdaPermissionCsvS3:
+      Type: "AWS::Lambda::Permission"
+      Properties:
+        FunctionName:
+          "Fn::GetAtt":
+            - ProcessLambdaFunction
+            - Arn
+        Principal: "s3.amazonaws.com"
+        Action: "lambda:InvokeFunction"
+        SourceAccount:
+          Ref: AWS::AccountId
+        SourceArn: "arn:aws:s3:::${file(./config.yml):${opt:stage}.CSV_BUCKET}"
+
     elmBucket:
       Type: AWS::S3::Bucket
       Properties:
@@ -106,38 +170,38 @@ resources:
                     "/*"
                   ]
                 ]
-    CDN:
-      Type: "AWS::CloudFront::Distribution"
-      Properties:
-        DistributionConfig:
-          ViewerCertificate:
-            AcmCertificateArn: ${file(./config.yml):${opt:stage}.CERTIFICATE_ARN}
-            SslSupportMethod: sni-only
-          Enabled: true
-          HttpVersion: http2
-          # IsIPV6Enabled: true
-          # not supported by cloudformation
-          # https://forums.aws.amazon.com/thread.jspa?messageID=764293
-          Aliases: ${file(./config.yml):${opt:stage}.DOMAIN_ALIASES}
-          DefaultRootObject: index.html
-          Origins:
-            - DomainName: {"Fn::Join": ["", ["${file(./config.yml):${opt:stage}.ELM_BUCKET}", ".", "s3.amazonaws.com"]]}
-              # us-east-1.s3.amazonaws.com
-              Id: {"Fn::Join": ["", ["S3", "-", "${file(./config.yml):${opt:stage}.ELM_BUCKET}"]]}
-              CustomOriginConfig:
-                HTTPSPort: 443
-                OriginProtocolPolicy: http-only
-          DefaultCacheBehavior:
-            ViewerProtocolPolicy: redirect-to-https # allow-all
-            TargetOriginId: {"Fn::Join": ["", ["S3", "-", "${file(./config.yml):${opt:stage}.ELM_BUCKET}"]]}
-            AllowedMethods:
-              - GET
-              - HEAD
-            Compress: true
-            DefaultTTL: 30
-            MinTTL: 10
-            ForwardedValues:
-              QueryString: true
+    # CDN:
+    #   Type: "AWS::CloudFront::Distribution"
+    #   Properties:
+    #     DistributionConfig:
+    #       ViewerCertificate:
+    #         AcmCertificateArn: ${file(./config.yml):${opt:stage}.CERTIFICATE_ARN}
+    #         SslSupportMethod: sni-only
+    #       Enabled: true
+    #       HttpVersion: http2
+    #       # IsIPV6Enabled: true
+    #       # not supported by cloudformation
+    #       # https://forums.aws.amazon.com/thread.jspa?messageID=764293
+    #       Aliases: ${file(./config.yml):${opt:stage}.DOMAIN_ALIASES}
+    #       DefaultRootObject: index.html
+    #       Origins:
+    #         - DomainName: {"Fn::Join": ["", ["${file(./config.yml):${opt:stage}.ELM_BUCKET}", ".", "s3.amazonaws.com"]]}
+    #           # us-east-1.s3.amazonaws.com
+    #           Id: {"Fn::Join": ["", ["S3", "-", "${file(./config.yml):${opt:stage}.ELM_BUCKET}"]]}
+    #           CustomOriginConfig:
+    #             HTTPSPort: 443
+    #             OriginProtocolPolicy: http-only
+    #       DefaultCacheBehavior:
+    #         ViewerProtocolPolicy: redirect-to-https # allow-all
+    #         TargetOriginId: {"Fn::Join": ["", ["S3", "-", "${file(./config.yml):${opt:stage}.ELM_BUCKET}"]]}
+    #         AllowedMethods:
+    #           - GET
+    #           - HEAD
+    #         Compress: true
+    #         DefaultTTL: 30
+    #         MinTTL: 10
+    #         ForwardedValues:
+    #           QueryString: true
 
     # Creates a user pool in cognito for your app to auth against
 
@@ -288,6 +352,32 @@ resources:
           unauthenticated:
               'Fn::GetAtt': [ CognitoUnAuthorizedRole, Arn ]
 
+    # AppSync lambda role
+    AppSyncLambdaServiceRole:
+      Type: "AWS::IAM::Role"
+      Properties:
+        RoleName: "Lambda-${self:custom.appSync.serviceRole}"
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Principal:
+                Service:
+                  - "appsync.amazonaws.com"
+              Action:
+                - "sts:AssumeRole"
+        Policies:
+          - PolicyName: "Lambda-${self:custom.appSync.serviceRole}-Policy"
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: "Allow"
+                  Action:
+                    - "lambda:invokeFunction"
+                  Resource:
+                    - "arn:aws:lambda:#{AWS::Region}:#{AWS::AccountId}:function:graphql-${self:provider.stage}"
+                    - "arn:aws:lambda:#{AWS::Region}:#{AWS::AccountId}:function:graphql-${self:provider.stage}:*"
+
 Outputs:
   UserPoolId:
     Value:
@@ -304,3 +394,4 @@ Outputs:
       Ref: IdentityPool
     Export:
       Name: "IdentityPool::Id"
+

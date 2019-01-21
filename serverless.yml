@@ -170,38 +170,38 @@ resources:
                     "/*"
                   ]
                 ]
-    # CDN:
-    #   Type: "AWS::CloudFront::Distribution"
-    #   Properties:
-    #     DistributionConfig:
-    #       ViewerCertificate:
-    #         AcmCertificateArn: ${file(./config.yml):${opt:stage}.CERTIFICATE_ARN}
-    #         SslSupportMethod: sni-only
-    #       Enabled: true
-    #       HttpVersion: http2
-    #       # IsIPV6Enabled: true
-    #       # not supported by cloudformation
-    #       # https://forums.aws.amazon.com/thread.jspa?messageID=764293
-    #       Aliases: ${file(./config.yml):${opt:stage}.DOMAIN_ALIASES}
-    #       DefaultRootObject: index.html
-    #       Origins:
-    #         - DomainName: {"Fn::Join": ["", ["${file(./config.yml):${opt:stage}.ELM_BUCKET}", ".", "s3.amazonaws.com"]]}
-    #           # us-east-1.s3.amazonaws.com
-    #           Id: {"Fn::Join": ["", ["S3", "-", "${file(./config.yml):${opt:stage}.ELM_BUCKET}"]]}
-    #           CustomOriginConfig:
-    #             HTTPSPort: 443
-    #             OriginProtocolPolicy: http-only
-    #       DefaultCacheBehavior:
-    #         ViewerProtocolPolicy: redirect-to-https # allow-all
-    #         TargetOriginId: {"Fn::Join": ["", ["S3", "-", "${file(./config.yml):${opt:stage}.ELM_BUCKET}"]]}
-    #         AllowedMethods:
-    #           - GET
-    #           - HEAD
-    #         Compress: true
-    #         DefaultTTL: 30
-    #         MinTTL: 10
-    #         ForwardedValues:
-    #           QueryString: true
+    CDN:
+      Type: "AWS::CloudFront::Distribution"
+      Properties:
+        DistributionConfig:
+          ViewerCertificate:
+            AcmCertificateArn: ${file(./config.yml):${opt:stage}.CERTIFICATE_ARN}
+            SslSupportMethod: sni-only
+          Enabled: true
+          HttpVersion: http2
+          # IsIPV6Enabled: true
+          # not supported by cloudformation
+          # https://forums.aws.amazon.com/thread.jspa?messageID=764293
+          Aliases: ${file(./config.yml):${opt:stage}.DOMAIN_ALIASES}
+          DefaultRootObject: index.html
+          Origins:
+            - DomainName: {"Fn::Join": ["", ["${file(./config.yml):${opt:stage}.ELM_BUCKET}", ".", "s3.amazonaws.com"]]}
+              # us-east-1.s3.amazonaws.com
+              Id: {"Fn::Join": ["", ["S3", "-", "${file(./config.yml):${opt:stage}.ELM_BUCKET}"]]}
+              CustomOriginConfig:
+                HTTPSPort: 443
+                OriginProtocolPolicy: http-only
+          DefaultCacheBehavior:
+            ViewerProtocolPolicy: redirect-to-https # allow-all
+            TargetOriginId: {"Fn::Join": ["", ["S3", "-", "${file(./config.yml):${opt:stage}.ELM_BUCKET}"]]}
+            AllowedMethods:
+              - GET
+              - HEAD
+            Compress: true
+            DefaultTTL: 30
+            MinTTL: 10
+            ForwardedValues:
+              QueryString: true
 
     # Creates a user pool in cognito for your app to auth against
 

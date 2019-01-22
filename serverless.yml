@@ -97,7 +97,20 @@ functions:
       - http:
           path: status
           method: get
+
   process:
+    handler: bin/process
+    description: Process CSV files function
+    package:
+      individually: true
+      include:
+        - ./bin/resize
+    memorySize: 128
+    timeout: 30
+    events:
+      - s3: csv
+
+  reprocess:
     handler: bin/process
     description: Process CSV files function
     package:
@@ -116,6 +129,45 @@ resources:
       Properties:
         BucketName: ${file(./config.yml):${opt:stage}.CSV_BUCKET}
         # add additional custom bucket configuration here
+        NotificationConfiguration:
+          LambdaConfigurations:
+            - Event: 's3:ObjectCreated:*'
+              Function:
+                "Fn::GetAtt":
+                  - ProcessLambdaFunction
+                  - Arn
+            - Event: 's3:ObjectRemoved:*'
+              Function:
+                "Fn::GetAtt":
+                  - ReprocessLambdaFunction
+                  - Arn
+        LifecycleConfiguration:
+          Rules:
+            - Id: "Delayed csv expiration"
+              Status: "Enabled"
+              TagFilters:
+                  - Key: "deleted-csv"
+                    Value: "true"
+              ExpirationInDays: 1
+
+    CsvBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: ${file(./config.yml):${opt:stage}.CSV_BUCKET}
+        PolicyDocument:
+          Statement:
+            - Action:
+                - s3:putObject
+              Effect: "Allow"
+              Principal:
+                "AWS":
+                  - "arn:aws:iam::#{AWS::AccountId}:root"
+              Resource:
+                - "arn:aws:s3:::${file(./config.yml):${opt:stage}.CSV_BUCKET}/*.xls"
+                - "arn:aws:s3:::${file(./config.yml):${opt:stage}.CSV_BUCKET}/*.csv"
+                - "arn:aws:s3:::${file(./config.yml):${opt:stage}.CSV_BUCKET}/*.tsv"
+                - "arn:aws:s3:::${file(./config.yml):${opt:stage}.CSV_BUCKET}/*.xlsx"
+
     ProcessLambdaPermissionCsvS3:
       Type: "AWS::Lambda::Permission"
       Properties:
@@ -128,6 +180,20 @@ resources:
         SourceAccount:
           Ref: AWS::AccountId
         SourceArn: "arn:aws:s3:::${file(./config.yml):${opt:stage}.CSV_BUCKET}"
+
+    ReprocessLambdaPermissionCsvS3:
+      Type: "AWS::Lambda::Permission"
+      Properties:
+        FunctionName:
+          "Fn::GetAtt":
+            - ReprocessLambdaFunction
+            - Arn
+        Principal: "s3.amazonaws.com"
+        Action: "lambda:InvokeFunction"
+        SourceAccount:
+          Ref: AWS::AccountId
+        SourceArn: "arn:aws:s3:::${file(./config.yml):${opt:stage}.CSV_BUCKET}"
+
 
     elmBucket:
       Type: AWS::S3::Bucket

@@ -1,80 +1,254 @@
-module Main exposing (Model, Msg(..), init, main, update, view)
+module Main exposing (main)
 
-import Browser
-import Element exposing (..)
-import Element.Background as Background
-import Element.Border as Border
-import Element.Events exposing (..)
-import Element.Font as Font
-import Element.Input as Input
-import Html exposing (Html, div, h1, h2, img, p, text)
+import Bootstrap.Button as Button
+import Bootstrap.Card as Card
+import Bootstrap.Card.Block as Block
+import Bootstrap.Grid as Grid
+import Bootstrap.Grid.Col as Col
+import Bootstrap.ListGroup as Listgroup
+import Bootstrap.Modal as Modal
+import Bootstrap.Navbar as Navbar
+import Browser exposing (UrlRequest)
+import Browser.Navigation as Navigation
+import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (onClick)
+import Url exposing (Url)
+import Url.Parser as UrlParser exposing ((</>), Parser, s, top)
 
 
----- MODEL ----
+type alias Flags =
+    {}
 
 
 type alias Model =
-    Int
+    { navKey : Navigation.Key
+    , page : Page
+    , navState : Navbar.State
+    , modalVisibility : Modal.Visibility
+    }
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( 0, Cmd.none )
+type Page
+    = Home
+    | GettingStarted
+    | Modules
+    | NotFound
 
 
+main : Program Flags Model Msg
+main =
+    Browser.application
+        { init = init
+        , view = view
+        , update = update
+        , subscriptions = subscriptions
+        , onUrlRequest = ClickedLink
+        , onUrlChange = UrlChange
+        }
 
----- UPDATE ----
+
+init : Flags -> Url -> Navigation.Key -> ( Model, Cmd Msg )
+init flags url key =
+    let
+        ( navState, navCmd ) =
+            Navbar.initialState NavMsg
+
+        ( model, urlCmd ) =
+            urlUpdate url { navKey = key, navState = navState, page = Home, modalVisibility = Modal.hidden }
+    in
+    ( model, Cmd.batch [ urlCmd, navCmd ] )
 
 
 type Msg
-    = NoOp
-    | Increment
+    = UrlChange Url
+    | ClickedLink UrlRequest
+    | NavMsg Navbar.State
+    | CloseModal
+    | ShowModal
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Navbar.subscriptions model.navState NavMsg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case ( msg, model ) of
-        ( Increment, _ ) ->
-            ( model, Cmd.none )
+    case msg of
+        ClickedLink req ->
+            case req of
+                Browser.Internal url ->
+                    ( model, Navigation.pushUrl model.navKey <| Url.toString url )
 
-        ( NoOp, _ ) ->
-            ( model, Cmd.none )
+                Browser.External href ->
+                    ( model, Navigation.load href )
+
+        UrlChange url ->
+            urlUpdate url model
+
+        NavMsg state ->
+            ( { model | navState = state }
+            , Cmd.none
+            )
+
+        CloseModal ->
+            ( { model | modalVisibility = Modal.hidden }
+            , Cmd.none
+            )
+
+        ShowModal ->
+            ( { model | modalVisibility = Modal.shown }
+            , Cmd.none
+            )
 
 
+urlUpdate : Url -> Model -> ( Model, Cmd Msg )
+urlUpdate url model =
+    case decode url of
+        Nothing ->
+            ( { model | page = NotFound }, Cmd.none )
 
----- VIEW ----
+        Just route ->
+            ( { model | page = route }, Cmd.none )
 
 
-view : Model -> Html Msg
-view model =
-    div [ id "main" ]
-        [ viewLogo
-        , viewBanner
+decode : Url -> Maybe Page
+decode url =
+    { url | path = Maybe.withDefault "" url.fragment, fragment = Nothing }
+        |> UrlParser.parse routeParser
+
+
+routeParser : Parser (Page -> a) a
+routeParser =
+    UrlParser.oneOf
+        [ UrlParser.map Home top
+        , UrlParser.map GettingStarted (s "getting-started")
+        , UrlParser.map Modules (s "modules")
         ]
 
 
-viewLogo =
-    div [ class "logo" ]
-        [ img [ src "/logo.png" ] [] ]
-
-
-viewBanner =
-    div [ class "banner" ]
-        [ div [ class "container" ]
-            [ h1 [ class "logo-font" ] [ text "Zeitgeist Movement Global Connect!" ]
-            , p [] [ text "A place to share your knowledge." ]
+view : Model -> Browser.Document Msg
+view model =
+    { title = "Elm Bootstrap"
+    , body =
+        [ div []
+            [ menu model
+            , mainContent model
+            , modal model
             ]
         ]
+    }
 
----- PROGRAM ----
+
+menu : Model -> Html Msg
+menu model =
+    Navbar.config NavMsg
+        |> Navbar.withAnimation
+        |> Navbar.container
+        |> Navbar.brand [ href "#" ] [ text "ZMGC" ]
+        |> Navbar.items
+            [ Navbar.itemLink [ href "#getting-started" ] [ text "Getting started" ]
+            , Navbar.itemLink [ href "#modules" ] [ text "Modules" ]
+            ]
+        |> Navbar.view model.navState
 
 
-main : Program () Model Msg
-main =
-    Browser.element
-        { view = view
-        , init = \_ -> init
-        , update = \msg model -> ( model, Cmd.none )
-        , subscriptions = always Sub.none
-        }
+mainContent : Model -> Html Msg
+mainContent model =
+    Grid.container [] <|
+        case model.page of
+            Home ->
+                pageHome model
+
+            GettingStarted ->
+                pageGettingStarted model
+
+            Modules ->
+                pageModules model
+
+            NotFound ->
+                pageNotFound
+
+
+pageHome : Model -> List (Html Msg)
+pageHome model =
+    [ h1 [] [ text "Zeitgeist Movement Global Connect!" ]
+    , Grid.row []
+        [ Grid.col []
+            [ Card.config [ Card.outlinePrimary ]
+                |> Card.headerH4 [] [ text "About" ]
+                |> Card.block []
+                    [ Block.text [] [ text "A place to share your knowledge." ]
+                    , Block.custom <|
+                        Button.linkButton
+                            [ Button.primary, Button.attrs [ href "#getting-started" ] ]
+                            [ text "Start" ]
+                    ]
+                |> Card.view
+            ]
+        , Grid.col []
+            [ Card.config [ Card.outlineDanger ]
+                |> Card.headerH4 [] [ text "Modules" ]
+                |> Card.block []
+                    [ Block.text [] [ text "Check out the modules overview" ]
+                    , Block.custom <|
+                        Button.linkButton
+                            [ Button.primary, Button.attrs [ href "#modules" ] ]
+                            [ text "Module" ]
+                    ]
+                |> Card.view
+            ]
+        ]
+    ]
+
+
+pageGettingStarted : Model -> List (Html Msg)
+pageGettingStarted model =
+    [ h2 [] [ text "Getting started" ]
+    , Button.button
+        [ Button.success
+        , Button.large
+        , Button.block
+        , Button.attrs [ onClick ShowModal ]
+        ]
+        [ text "Click me" ]
+    ]
+
+
+pageModules : Model -> List (Html Msg)
+pageModules model =
+    [ h1 [] [ text "Modules" ]
+    , Listgroup.ul
+        [ Listgroup.li [] [ text "Alert" ]
+        , Listgroup.li [] [ text "Badge" ]
+        , Listgroup.li [] [ text "Card" ]
+        ]
+    ]
+
+
+pageNotFound : List (Html Msg)
+pageNotFound =
+    [ h1 [] [ text "Not found" ]
+    , text "Sorry couldn't find that page"
+    ]
+
+
+modal : Model -> Html Msg
+modal model =
+    Modal.config CloseModal
+        |> Modal.small
+        |> Modal.h4 [] [ text "Getting started ?" ]
+        |> Modal.body []
+            [ Grid.containerFluid []
+                [ Grid.row []
+                    [ Grid.col
+                        [ Col.xs6 ]
+                        [ text "Col 1" ]
+                    , Grid.col
+                        [ Col.xs6 ]
+                        [ text "Col 2" ]
+                    ]
+                ]
+            ]
+        |> Modal.view model.modalVisibility

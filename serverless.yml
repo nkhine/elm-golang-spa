@@ -194,7 +194,6 @@ resources:
           Ref: AWS::AccountId
         SourceArn: "arn:aws:s3:::${file(./config.yml):${opt:stage}.CSV_BUCKET}"
 
-
     elmBucket:
       Type: AWS::S3::Bucket
       Properties:

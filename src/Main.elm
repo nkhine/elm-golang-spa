@@ -3,11 +3,13 @@ module Main exposing (main)
 import Bootstrap.Button as Button
 import Bootstrap.Card as Card
 import Bootstrap.Card.Block as Block
+import Bootstrap.Form.Input as Input
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Bootstrap.ListGroup as Listgroup
 import Bootstrap.Modal as Modal
 import Bootstrap.Navbar as Navbar
+import Bootstrap.Utilities.Spacing as Spacing
 import Browser exposing (UrlRequest)
 import Browser.Navigation as Navigation
 import Html exposing (..)
@@ -143,15 +145,75 @@ view model =
 
 menu : Model -> Html Msg
 menu model =
-    Navbar.config NavMsg
-        |> Navbar.withAnimation
-        |> Navbar.container
-        |> Navbar.brand [ href "#" ] [ text "ZMGC" ]
-        |> Navbar.items
-            [ Navbar.itemLink [ href "#getting-started" ] [ text "Getting started" ]
-            , Navbar.itemLink [ href "#modules" ] [ text "Modules" ]
-            ]
-        |> Navbar.view model.navState
+    -- Grid.container []
+    --     -- Wrap in a container to center the navbar
+    --     [ Navbar.config NavMsg
+    --         |> Navbar.withAnimation
+    --         |> Navbar.container
+    --         |> Navbar.brand [ href "#" ] [ text "ZMGC" ]
+    --         |> Navbar.items
+    --             [ Navbar.itemLink [ href "#getting-started" ] [ text "Getting started" ]
+    --             , Navbar.itemLink [ href "#modules" ] [ text "Modules" ]
+    --             ]
+    --         |> Navbar.view model.navState
+    --     ]
+    Grid.container []
+        -- Wrap in a container to center the navbar
+        [ Navbar.config NavMsg
+            |> Navbar.withAnimation
+            |> Navbar.collapseMedium
+            -- Collapse menu at the medium breakpoint
+            |> Navbar.info
+            -- Customize coloring
+            |> Navbar.brand
+                -- Add logo to your brand with a little styling to align nicely
+                [ href "#" ]
+                [ img
+                    [ src "assets/images/logo.svg"
+                    , class "d-inline-block align-top"
+                    , style "height" "30px"
+                    , style "width" "30px"
+                    , alt "Zeitgeist Movement Global Connect"
+                    ]
+                    []
+                ]
+            |> Navbar.items
+                [ Navbar.itemLink
+                    [ href "#" ]
+                    [ text "Item 1" ]
+                , Navbar.dropdown
+                    -- Adding dropdowns is pretty simple
+                    { id = "mydropdown"
+                    , toggle = Navbar.dropdownToggle [] [ text "My dropdown" ]
+                    , items =
+                        [ Navbar.dropdownHeader [ text "Heading" ]
+                        , Navbar.dropdownItem
+                            [ href "#" ]
+                            [ text "Drop item 1" ]
+                        , Navbar.dropdownItem
+                            [ href "#" ]
+                            [ text "Drop item 2" ]
+                        , Navbar.dropdownDivider
+                        , Navbar.dropdownItem
+                            [ href "#" ]
+                            [ text "Drop item 3" ]
+                        ]
+                    }
+                ]
+            |> Navbar.customItems
+                [ Navbar.formItem []
+                    [ Input.text [ Input.attrs [ placeholder "enter" ] ]
+                    , Button.button
+                        [ Button.success
+                        , Button.attrs [ Spacing.ml2Sm ]
+                        ]
+                        [ text "Search" ]
+                    ]
+
+                -- , Navbar.textItem [ Spacing.ml2Sm, class "muted" ] [ text "Text" ]
+                ]
+            |> Navbar.view model.navState
+        ]
 
 
 mainContent : Model -> Html Msg

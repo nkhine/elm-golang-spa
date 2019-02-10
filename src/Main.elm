@@ -12,11 +12,14 @@ import Bootstrap.Navbar as Navbar
 import Bootstrap.Utilities.Spacing as Spacing
 import Browser exposing (UrlRequest)
 import Browser.Navigation as Navigation
+import Globals
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
+import Route
 import Url exposing (Url)
 import Url.Parser as UrlParser exposing ((</>), Parser, s, top)
+import Utils exposing (externalLink)
 
 
 type alias Flags =
@@ -138,32 +141,33 @@ view model =
             [ menu model
             , mainContent model
             , modal model
+            , viewFooter
             ]
         ]
     }
 
 
+
+-- view model =
+--     { title = "Elm Bootstrap"
+--     , body =
+--         [ menu model ]
+--             ++ viewPage model
+--             ++ [ viewFooter ]
+--     }
+
+
 menu : Model -> Html Msg
 menu model =
-    -- Grid.container []
-    --     -- Wrap in a container to center the navbar
-    --     [ Navbar.config NavMsg
-    --         |> Navbar.withAnimation
-    --         |> Navbar.container
-    --         |> Navbar.brand [ href "#" ] [ text "ZMGC" ]
-    --         |> Navbar.items
-    --             [ Navbar.itemLink [ href "#getting-started" ] [ text "Getting started" ]
-    --             , Navbar.itemLink [ href "#modules" ] [ text "Modules" ]
-    --             ]
-    --         |> Navbar.view model.navState
-    --     ]
     Grid.container []
         -- Wrap in a container to center the navbar
         [ Navbar.config NavMsg
+            |> Navbar.container
+            |> Navbar.collapseSmall
             |> Navbar.withAnimation
-            |> Navbar.collapseMedium
+            |> Navbar.lightCustomClass "bd-navbar"
             -- Collapse menu at the medium breakpoint
-            |> Navbar.info
+            -- |> Navbar.info
             -- Customize coloring
             |> Navbar.brand
                 -- Add logo to your brand with a little styling to align nicely
@@ -216,6 +220,18 @@ menu model =
         ]
 
 
+
+-- viewPage : Model -> List (Html Msg)
+-- viewPage model =
+--     let
+--         wrap =
+--             wrapPageLayout model
+--     in
+--     case model.route of
+--         Route.Home ->
+--             PHome.view
+
+
 mainContent : Model -> Html Msg
 mainContent model =
     Grid.container [] <|
@@ -235,31 +251,73 @@ mainContent model =
 
 pageHome : Model -> List (Html Msg)
 pageHome model =
-    [ h1 [] [ text "Zeitgeist Movement Global Connect!" ]
-    , Grid.row []
-        [ Grid.col []
-            [ Card.config [ Card.outlinePrimary ]
-                |> Card.headerH4 [] [ text "About" ]
-                |> Card.block []
-                    [ Block.text [] [ text "A place to share your knowledge." ]
-                    , Block.custom <|
-                        Button.linkButton
-                            [ Button.primary, Button.attrs [ href "#getting-started" ] ]
-                            [ text "Start" ]
-                    ]
-                |> Card.view
+    [ main_
+        [ class "bd-masthead", id "content" ]
+        [ div
+            [ style "margin" "0 auto 2rem" ]
+            [ img
+                [ src "assets/images/logo.svg"
+                , alt "elm-bootstrap"
+                , style "border" "1px solid white"
+                , style "width" "120px"
+                , style "border-radius" "15%"
+                ]
+                []
             ]
-        , Grid.col []
-            [ Card.config [ Card.outlineDanger ]
-                |> Card.headerH4 [] [ text "Modules" ]
-                |> Card.block []
-                    [ Block.text [] [ text "Check out the modules overview" ]
-                    , Block.custom <|
-                        Button.linkButton
-                            [ Button.primary, Button.attrs [ href "#modules" ] ]
-                            [ text "Module" ]
+        , p [ class "lead" ]
+            [ text "Build responsive "
+            , a
+                [ style "color" "#ffe484"
+                , href "http://elm-lang.org"
+                , target "_blank"
+                ]
+                [ text "Elm" ]
+            , text " applications using "
+            , a
+                [ href Globals.bootstrapUrl
+                , target "_blank"
+                , style "color" "#ffe484"
+                ]
+                [ text "Bootstrap 4" ]
+            , text "."
+            ]
+        , p [ class "version" ]
+            [ text "v5.0.0" ]
+        ]
+    , div
+        [ class "bd-featurette" ]
+        [ div
+            [ class "container" ]
+            [ h2
+                [ class "bd-featurette-title" ]
+                [ text "Responsive and reliable" ]
+            , p
+                [ class "lead" ]
+                [ text """Elm Bootstrap lets you easily create responsive web applications with confidence""" ]
+            , div
+                [ class "row" ]
+                [ div
+                    [ class "col-sm-6 mb-3" ]
+                    [ h4 [] [ text "Getting started" ]
+                    , p []
+                        [ text """The easiest way to get started is using the Bootstrap.CDN module, which allows you to inline the latest Bootstrap CSS.
+                               This allows you to start using Elm Bootstrap with the elm-reactor from the get go.
+                               """
+                        , a (Route.clickTo Route.GettingStarted)
+                            [ text "Read more..." ]
+                        ]
                     ]
-                |> Card.view
+                , div
+                    [ class "col-sm-6 mb-3" ]
+                    [ h4 [] [ text "Reasonably type safe" ]
+                    , p []
+                        [ text """The Elm Bootstrap library provides a fairly type safe API so that you can spend the majority of your time
+                               designing your application not worrying about doing stuff that doesn't make sense or won't work.
+                               You'll get sensible defaults and the Elm compiler will have your back most of the time !
+                               """
+                        ]
+                    ]
+                ]
             ]
         ]
     ]
@@ -314,3 +372,33 @@ modal model =
                 ]
             ]
         |> Modal.view model.modalVisibility
+
+
+viewFooter : Html Msg
+viewFooter =
+    footer [ class "bd-footer text-muted" ]
+        [ div [ class "container" ]
+            [ ul [ class "bd-footer-links" ]
+                [ li []
+                    [ i [ class "fa fa-github", attribute "aria-hidden" "true" ] []
+                    , externalLink Globals.githubDocsUrl " Docs"
+                    ]
+                , li []
+                    [ i [ class "fa fa-github", attribute "aria-hidden" "true" ] []
+                    , externalLink Globals.githubSourceUrl " Source"
+                    ]
+                , li []
+                    [ externalLink Globals.packageUrl "Package"
+                    ]
+                , li []
+                    [ externalLink Globals.bootstrapUrl "Bootstrap 4" ]
+                ]
+            , p []
+                [ text "Created by Magnus Rundberget "
+                , i [ class "fa fa-twitter", attribute "aria-hidden" "true" ] []
+                , externalLink "https://twitter.com/mrundberget" "mrundberget"
+                , text " with help from contributor heroes !"
+                ]
+            , p [] [ text "The code is licensed BSD-3 and the documentation is licensed CC BY 3.0." ]
+            ]
+        ]

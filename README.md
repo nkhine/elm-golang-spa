@@ -7,6 +7,7 @@ You can find the most recent version of this guide [here](https://github.com/hal
 
 ## Table of Contents
 
+* [Why elm?](#why-elm)
 * [Sending feedback](#sending-feedback)
 * [Folder structure](#folder-structure)
 * [Installing Elm packages](#installing-elm-packages)
@@ -51,6 +52,61 @@ You can find the most recent version of this guide [here](https://github.com/hal
   * [Netlify](#netlify)
   * [GitHub Pages](#github-pages)
 * [IDE setup for Hot Module Replacement](#ide-setup-for-hot-module-replacement)
+
+## Why Elm
+
+I'd sum up the experience of programming in Elm with two words: **Fearless Refactoring**
+
+This is by no means the only pleasantry the fine tree has to offer.
+
+Elm's claim to fame is zero runtime exceptions. It's compiler and static types are your best friends. Both from an error catching standpoint, but just as importantly, from a domain modeling standpoint.  
+
+**Union Types** allow you to fully leverage the compiler when modeling your business domain. See [BlockId](http://package.elm-lang.org/packages/cmditch/elm-ethereum/latest/Eth-Types#BlockId) or [NetworkId](http://package.elm-lang.org/packages/cmditch/elm-ethereum/latest/Eth-Net#NetworkId) for instance.  
+
+Union types also allow you to hide implementation details by implementing "opaque types".  An [Address](https://github.com/cmditch/elm-ethereum/blob/master/src/Internal/Types.elm#L4) is just a string under the hood, but you can never directly touch that string.
+
+### Why else
+
+- **Simplicity and cohesion**
+
+```text
+    Javascript                    Elm
+    ---------------------------------
+    npm/yarn                 built in
+    Webpack                  built in
+    React                    built in
+    Redux                    built in
+    Typescript/Flow          built in
+    Immutable.JS             built in
+```
+
+- **Phenomenal tooling and resources**
+
+     [**Time traveling debugger**](http://elm-lang.org/blog/the-perfect-bug-report) - Import/Export history. QA like a champ.  
+     [**elm-format**](https://github.com/avh4/elm-format) - Adds up to hours of tedius "work" saved.  
+     [**elm-reactor**](https://github.com/elm-lang/elm-reactor) - Nice dev server.  
+     [**elm-test**](http://package.elm-lang.org/packages/elm-community/elm-test/latest) - Fuzz testing == legit.  
+     [**elm-benchmark**](http://package.elm-lang.org/packages/BrianHicks/elm-benchmark/latest) - Clone this package and give it a whirl.  
+     [**Elm Package and Docs**](http://package.elm-lang.org/) - Pleasant and consistent. Enforced semantic versioning.  
+
+- **Strong static types**
+
+     Find errors fast with readable compiler messages.  
+     Less [millions of dollars lost](https://twitter.com/a_ferron/status/892350579162439681?lang=en) from typos.
+
+- **No null or undefined**
+
+     Never miss a potential problem.
+
+- **Purely functional**
+
+     Leads to decoupled and easily refactorable code.
+
+- **Great Community**
+
+     Thoughtful, responsive, intelligent, and kind.  
+     Great [Slack](https://elmlang.herokuapp.com/) and [Discourse](https://discourse.elm-lang.org/).
+
 
 ## Sending feedback
 

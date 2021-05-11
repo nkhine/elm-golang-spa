@@ -1,14 +1,26 @@
-.serverless
-# package directories
-node_modules
-jspm_packages
-# Serverless directories
-package-lock.json
-vendor.json
-build
-config.yml
-bin
-Gopkg.lock
-spec.json
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# go.sum should be committed
+!go.sum
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+
+# Elm
+.DS_Store
+.elm-spa
 elm-stuff
-vendor
+node_modules
+dist

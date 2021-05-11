@@ -17,6 +17,9 @@ config.yml
 # go.sum should be committed
 !go.sum
 
+# don't export binaries
+/bin/*
+
 # CDK asset staging directory
 .cdk.staging
 cdk.out

@@ -6,6 +6,6 @@ import View exposing (View)
 
 view : View msg
 view =
-    { title = "Homepage"
-    , body = [ Html.text "Hello, world!" ]
+    { title = "AWS pipeline"
+    , body = [ Html.text "Hello, AWS pipeline!" ]
     }
